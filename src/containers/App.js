@@ -2,41 +2,44 @@ import React from "react";
 import CardList from "../components/CardList";
 import Search from "../components/Search";
 import Scroll from "../components/Scroll";
+import { setSearchField, requestRobots } from "../actions";
+import { connect } from "react-redux";
+
+const mapStateToProps = state => {
+  return {
+    searchField: state.searchRobots.searchField,
+    robots: state.requestRobots.robots,
+    isPending: state.requestRobots.isPending,
+    error: state.requestRobots.error
+  };
+};
+
+const mapDispatchToProps = dispatch => {
+  return {
+    onSearchChange: event => dispatch(setSearchField(event.target.value)),
+    onRequestRobots: () => dispatch(requestRobots())
+  };
+};
 
 class App extends React.Component {
-  state = {
-    robots: [],
-    searchField: ""
-  };
-
   componentDidMount() {
-    fetch("https://jsonplaceholder.typicode.com/users")
-      .then(response => response.json())
-      .then(users =>
-        this.setState({
-          robots: users
-        })
-      );
+    this.props.onRequestRobots();
   }
 
-  onChange = event =>
-    this.setState({
-      searchField: event.target.value
-    });
-
   render() {
-    const robotsToRender = this.state.robots.filter(value => {
-      if (
-        value.name.toLowerCase().includes(this.state.searchField.toLowerCase())
-      ) {
+    const { searchField, onSearchChange, robots, isPending } = this.props;
+    const robotsToRender = robots.filter(value => {
+      if (value.name.toLowerCase().includes(searchField.toLowerCase())) {
         return value;
       }
     });
 
-    return (
+    return isPending ? (
+      <h1>Loading...</h1>
+    ) : (
       <div className="tc">
         <h1 className={"f1"}>Robofriends</h1>
-        <Search onChange={this.onChange} />
+        <Search onChange={onSearchChange} />
         <Scroll>
           <CardList robots={robotsToRender} />
         </Scroll>
@@ -45,4 +48,4 @@ class App extends React.Component {
   }
 }
 
-export default App;
+export default connect(mapStateToProps, mapDispatchToProps)(App);
